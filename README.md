@@ -36,7 +36,7 @@
 ## 🎯 How to Use
 
 1. Go to [MyCourseVille](https://www.mycourseville.com) and log in.
-2. Open any course page (e.g. `2110205 Statistics for Computer Engineering`).
+2. Open any course page.
 3. Scroll to the **Course Material** section.
 4. You will see checkboxes next to each folder header and next to each file row.
 5. Check any folders or individual files you want to download.
