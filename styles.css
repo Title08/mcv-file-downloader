@@ -93,16 +93,41 @@ input[type="checkbox"].mcv-checkbox:indeterminate::before,
 
 input[type="checkbox"].mcv-folder-checkbox,
 .mcv-folder-checkbox {
-  margin: 0 12px 0 0 !important;
+  margin: 0 !important;
   z-index: 10;
   flex-shrink: 0;
 }
 
+.mcv-folder-checkbox-wrapper {
+  margin-right: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  vertical-align: middle !important;
+}
+
 input[type="checkbox"].mcv-file-checkbox,
 .mcv-file-checkbox {
-  margin: 0 14px 0 0 !important;
+  margin: 0 !important;
   flex-shrink: 0;
 }
+
+/* Dedicated Checkbox Column for File Rows */
+td.mcv-col-checkbox {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 0 4px !important;
+}
+
+td.mcv-col-checkbox .mcv-checkbox-wrapper {
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 
 
 /* Highlight row when checked */

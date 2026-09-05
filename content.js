@@ -174,14 +174,10 @@
   }
 
   /**
-   * Injects checkbox into a single file row
+   * Injects checkbox into a dedicated table cell at the start of each file row
    */
   function injectFileCheckbox(row, folderName = '') {
     if (row.getAttribute('data-mcv-injected') === 'true') return;
-
-    // Find thumbnail cell or first td
-    const targetCell = row.querySelector('td[data-col="thumbnail"]') || row.children[0];
-    if (!targetCell) return;
 
     // Extract title & download link
     const titleCell = row.querySelector('td[data-col="title"]') || row;
@@ -189,6 +185,9 @@
 
     const linkEl = row.querySelector('td[data-col="action"] a[href]') || row.querySelector('a[href]');
     const downloadUrl = linkEl ? linkEl.getAttribute('href') : '';
+
+    const checkboxTd = document.createElement('td');
+    checkboxTd.className = 'mcv-col-checkbox';
 
     const cbWrapper = document.createElement('span');
     cbWrapper.className = 'mcv-checkbox-wrapper';
@@ -217,9 +216,11 @@
     });
 
     cbWrapper.appendChild(checkbox);
-    targetCell.prepend(cbWrapper);
+    checkboxTd.appendChild(cbWrapper);
+    row.insertBefore(checkboxTd, row.firstChild);
     row.setAttribute('data-mcv-injected', 'true');
   }
+
 
   /**
    * Select All items across all folders and root
