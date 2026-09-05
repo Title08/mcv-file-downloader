@@ -28,23 +28,35 @@
   }
 
   /**
-   * Retrieves Course Title & Code from DOM
+   * Retrieves Course Title & Code from DOM or URL
    */
   function getCourseInfo() {
     let code = '';
     let name = '';
 
-    // Check header or breadcrumbs
-    const headerEl = document.querySelector('.cv-course-home-title, h1, .cv-course-title');
-    if (headerEl) {
-      const text = headerEl.textContent.trim();
+    // Check header or title elements
+    const titleEl = document.querySelector('.cv-course-home-title, .cv-course-title, #courseville-course-title, h1');
+    if (titleEl) {
+      const text = titleEl.textContent.trim();
       const codeMatch = text.match(/\b\d{7}\b/);
       if (codeMatch) code = codeMatch[0];
       name = text.replace(code, '').replace(/[\(\)\|]/g, '').trim();
     }
 
     if (!code) {
-      // Try URL parameters
+      // Fallback: document.title (e.g. "2110205 (2026/1) | myCourseVille")
+      const docTitle = typeof document !== 'undefined' && document.title ? document.title : '';
+      const docCodeMatch = docTitle.match(/\b\d{7}\b/);
+      if (docCodeMatch) code = docCodeMatch[0];
+      
+      const parts = docTitle.split('|');
+      if (parts[0] && !name) {
+        name = parts[0].replace(code, '').replace(/[\(\)\/\d]/g, '').trim();
+      }
+    }
+
+    if (!code) {
+      // Fallback: URL search params
       const urlParams = new URLSearchParams(window.location ? window.location.search : '');
       const q = urlParams.get('q') || '';
       const courseMatch = q.match(/course\/(\d+)/);
@@ -260,7 +272,7 @@
       const extMatch = cleanTitle.match(/\.([0-9a-zA-Z]+)$/) || url.match(/\.([0-9a-zA-Z]+)(?:\?|$)/);
       if (extMatch) {
         ext = extMatch[1].toLowerCase();
-        if (!cleanTitle.endsWith('.' + ext)) {
+        if (!cleanTitle.toLowerCase().endsWith('.' + ext)) {
           cleanTitle = `${cleanTitle}.${ext}`;
         }
       }
@@ -271,6 +283,286 @@
         folder: sanitizeName(cb.dataset.folder || '')
       };
     }).filter(item => Boolean(item.url));
+  }
+
+  /**
+   * Concurrency Queue for downloading files with max active connections
+   */
+  async function downloadQueue(items, concurrency = 3, fetcher, onProgress) {
+    const results = new Array(items.length);
+    let currentIndex = 0;
+    let completedCount = 0;
+
+    const worker = async () => {
+      while (currentIndex < items.length) {
+        const index = currentIndex++;
+        const item = items[index];
+        try {
+          const res = await fetcher(item);
+          results[index] = res;
+        } catch (err) {
+          results[index] = { item, error: err, success: false };
+        }
+        completedCount++;
+        if (typeof onProgress === 'function') {
+          onProgress(completedCount, items.length, item);
+        }
+      }
+    };
+
+    const workerPromises = [];
+    const poolSize = Math.min(concurrency, items.length);
+    for (let i = 0; i < poolSize; i++) {
+      workerPromises.push(worker());
+    }
+
+    await Promise.all(workerPromises);
+    return results;
+  }
+
+  /**
+   * Fetch a single file with exponential backoff retries
+   */
+  async function fetchWithRetry(url, maxRetries = 2, fetchFn = (typeof fetch !== 'undefined' ? fetch : null), signal = null) {
+    let attempt = 0;
+    let lastError = null;
+
+    while (attempt <= maxRetries) {
+      try {
+        const options = signal ? { signal } : {};
+        const response = await fetchFn(url, options);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.arrayBuffer();
+        return data;
+      } catch (err) {
+        lastError = err;
+        if (signal && signal.aborted) {
+          throw err;
+        }
+        attempt++;
+        if (attempt <= maxRetries) {
+          const delay = Math.pow(2, attempt) * 150;
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
+  /**
+   * Build JSZip archive from downloaded items
+   */
+  async function buildZip(downloadedItems, ZipLib = (typeof JSZip !== 'undefined' ? JSZip : null)) {
+    if (!ZipLib) {
+      throw new Error('JSZip library is not loaded');
+    }
+
+    const zip = new ZipLib();
+
+    downloadedItems.forEach(res => {
+      if (!res || !res.success || !res.data) return;
+      const { item, data } = res;
+
+      if (item.folder) {
+        zip.folder(item.folder).file(item.filename, data);
+      } else {
+        zip.file(item.filename, data);
+      }
+    });
+
+    return zip;
+  }
+
+  /**
+   * Progress Modal Management
+   */
+  function showProgressModal(totalFiles, courseInfo, onCancel) {
+    closeProgressModal();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'mcv-modal-overlay mcv-modal-visible';
+    overlay.id = 'mcv-progress-modal-root';
+
+    const card = document.createElement('div');
+    card.className = 'mcv-progress-modal';
+
+    const header = document.createElement('div');
+    header.className = 'mcv-modal-header';
+
+    const titleWrap = document.createElement('div');
+    const title = document.createElement('h3');
+    title.className = 'mcv-modal-title';
+    title.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Downloading Course Materials
+    `;
+    const courseSub = document.createElement('div');
+    courseSub.className = 'mcv-modal-course';
+    courseSub.textContent = `${courseInfo.code} ${courseInfo.name}`;
+
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(courseSub);
+    header.appendChild(titleWrap);
+
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'mcv-progress-container';
+
+    const meta = document.createElement('div');
+    meta.className = 'mcv-progress-meta';
+    const countSpan = document.createElement('span');
+    countSpan.className = 'mcv-meta-count';
+    countSpan.textContent = `0 / ${totalFiles} files`;
+    const pctSpan = document.createElement('span');
+    pctSpan.className = 'mcv-meta-pct';
+    pctSpan.textContent = '0%';
+
+    meta.appendChild(countSpan);
+    meta.appendChild(pctSpan);
+
+    const progressBar = document.createElement('div');
+    progressBar.className = 'mcv-progress-bar';
+    const fill = document.createElement('div');
+    fill.className = 'mcv-progress-fill';
+    progressBar.appendChild(fill);
+
+    const statusDetail = document.createElement('div');
+    statusDetail.className = 'mcv-status-detail';
+    statusDetail.textContent = 'Preparing download queue...';
+
+    progressContainer.appendChild(meta);
+    progressContainer.appendChild(progressBar);
+    progressContainer.appendChild(statusDetail);
+
+    const footer = document.createElement('div');
+    footer.className = 'mcv-modal-footer';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'mcv-btn-cancel';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => {
+      if (typeof onCancel === 'function') onCancel();
+      closeProgressModal();
+    });
+    footer.appendChild(cancelBtn);
+
+    card.appendChild(header);
+    card.appendChild(progressContainer);
+    card.appendChild(footer);
+    overlay.appendChild(card);
+
+    document.body.appendChild(overlay);
+    progressModalEl = overlay;
+  }
+
+  function updateProgressModal(current, total, detailText, percentage = null) {
+    if (!progressModalEl) return;
+
+    const pct = percentage !== null ? percentage : Math.round((current / total) * 100);
+    const countSpan = progressModalEl.querySelector('.mcv-meta-count');
+    const pctSpan = progressModalEl.querySelector('.mcv-meta-pct');
+    const fill = progressModalEl.querySelector('.mcv-progress-fill');
+    const statusDetail = progressModalEl.querySelector('.mcv-status-detail');
+
+    if (countSpan) countSpan.textContent = `${current} / ${total} files`;
+    if (pctSpan) pctSpan.textContent = `${pct}%`;
+    if (fill) fill.style.width = `${pct}%`;
+    if (statusDetail && detailText) statusDetail.textContent = detailText;
+  }
+
+  function closeProgressModal() {
+    if (progressModalEl) {
+      progressModalEl.remove();
+      progressModalEl = null;
+    }
+  }
+
+  /**
+   * Main Batch Download Orchestrator
+   */
+  async function startBatchDownload() {
+    const items = getSelectedItems();
+    if (items.length === 0) {
+      alert('Please select at least one file or folder to download.');
+      return;
+    }
+
+    const courseInfo = getCourseInfo();
+    const zipName = `${courseInfo.code}_${courseInfo.name}_Materials.zip`.replace(/_+/g, '_');
+
+    currentAbortController = new AbortController();
+
+    showProgressModal(items.length, courseInfo, () => {
+      if (currentAbortController) {
+        currentAbortController.abort();
+      }
+    });
+
+    try {
+      const fetcher = async (item) => {
+        updateProgressModal(
+          0,
+          items.length,
+          `Fetching: ${item.filename}`
+        );
+        const data = await fetchWithRetry(item.url, 2, fetch, currentAbortController.signal);
+        return { item, data, success: true };
+      };
+
+      const downloadedItems = await downloadQueue(
+        items,
+        3,
+        fetcher,
+        (current, total, item) => {
+          updateProgressModal(current, total, `Downloaded: ${item.filename}`);
+        }
+      );
+
+      updateProgressModal(items.length, items.length, 'Compressing into ZIP archive...', 98);
+
+      const zip = await buildZip(downloadedItems);
+      const zipBlob = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+
+      updateProgressModal(items.length, items.length, 'Download ready!', 100);
+
+      // Trigger download
+      const blobUrl = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = zipName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      }, 2000);
+
+      const failedCount = downloadedItems.filter(r => !r || !r.success).length;
+      setTimeout(() => {
+        closeProgressModal();
+        if (failedCount > 0) {
+          alert(`Download complete! Note: ${failedCount} of ${items.length} files could not be downloaded.`);
+        }
+      }, 600);
+
+    } catch (err) {
+      if (currentAbortController && currentAbortController.signal.aborted) {
+        console.log('[MCV Downloader] Download aborted by user.');
+      } else {
+        console.error('[MCV Downloader] Batch download error:', err);
+        alert(`Download failed: ${err.message}`);
+      }
+      closeProgressModal();
+    }
   }
 
   /**
@@ -328,11 +620,7 @@
       </svg>
       Download ZIP
     `;
-    downloadBtn.addEventListener('click', () => {
-      if (typeof handleDownloadZip === 'function') {
-        handleDownloadZip();
-      }
-    });
+    downloadBtn.addEventListener('click', startBatchDownload);
 
     actions.appendChild(deselectBtn);
     actions.appendChild(selectAllBtn);
@@ -382,13 +670,6 @@
     }
   }
 
-  // Placeholder for download handler (implemented in Task 4)
-  function handleDownloadZip() {
-    if (typeof MCVDownloader.startBatchDownload === 'function') {
-      MCVDownloader.startBatchDownload();
-    }
-  }
-
   // Auto-init in browser when DOM is ready
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
@@ -408,6 +689,13 @@
     updateFloatingBar,
     selectAll,
     deselectAll,
-    getSelectedItems
+    getSelectedItems,
+    downloadQueue,
+    fetchWithRetry,
+    buildZip,
+    showProgressModal,
+    updateProgressModal,
+    closeProgressModal,
+    startBatchDownload
   };
 });
