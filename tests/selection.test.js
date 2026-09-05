@@ -70,9 +70,11 @@ function runSelectionTests() {
 
   MCV.initMCVDownloader();
 
-  // Check folder checkbox exists
+  // Check folder checkbox exists and is wrapped in dedicated folder wrapper
   const folderCb = folder.querySelector('.mcv-folder-checkbox');
   assert(folderCb !== null, 'Folder checkbox must be injected');
+  const folderWrapper = folder.querySelector('.mcv-folder-checkbox-wrapper');
+  assert(folderWrapper !== null, 'Folder checkbox must be wrapped in .mcv-folder-checkbox-wrapper for column alignment');
 
   // Check file checkboxes exist
   const fileCbs = tbody.querySelectorAll('.mcv-file-checkbox');

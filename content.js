@@ -136,18 +136,30 @@
     const folderName = folderTitleEl.textContent.trim().replace(/\(\d+\s*items?\)/i, '').trim();
 
     const cbWrapper = document.createElement('span');
-    cbWrapper.className = 'mcv-checkbox-wrapper';
+    cbWrapper.className = 'mcv-folder-checkbox-wrapper';
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'mcv-checkbox mcv-folder-checkbox';
     checkbox.title = `Select folder: ${folderName}`;
 
-    // Prevent folder toggle when clicking checkbox
+    // Prevent folder toggle when clicking checkbox or wrapper
     const stopProp = (e) => {
-      if (e.stopPropagation) e.stopPropagation();
+      if (e && e.stopPropagation) e.stopPropagation();
     };
     checkbox.addEventListener('click', stopProp);
+
+    cbWrapper.addEventListener('click', (e) => {
+      stopProp(e);
+      if (e.target !== checkbox) {
+        checkbox.checked = !checkbox.checked;
+        try {
+          checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch (_) {
+          checkbox.dispatchEvent({ type: 'change', target: checkbox });
+        }
+      }
+    });
 
     checkbox.addEventListener('change', (e) => {
       stopProp(e);

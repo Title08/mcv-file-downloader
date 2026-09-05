@@ -14,7 +14,9 @@ function testStyles() {
   const requiredClasses = [
     '.mcv-checkbox',
     '.mcv-folder-checkbox',
+    '.mcv-folder-checkbox-wrapper',
     '.mcv-file-checkbox',
+    '.mcv-col-checkbox',
     '.mcv-floating-bar',
     '.mcv-badge',
     '.mcv-btn',

@@ -99,10 +99,18 @@ input[type="checkbox"].mcv-folder-checkbox,
 }
 
 .mcv-folder-checkbox-wrapper {
-  margin-right: 12px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   vertical-align: middle !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  cursor: pointer;
+  user-select: none;
 }
 
 input[type="checkbox"].mcv-file-checkbox,
