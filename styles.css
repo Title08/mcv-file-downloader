@@ -1,4 +1,348 @@
-/* Styles placeholder */
-.mcv-downloader-root {
-  display: block;
+/* ==========================================================================
+   MyCourseVille Batch Downloader - Modern Visual Design System
+   ========================================================================== */
+
+:root {
+  --mcv-primary: #4f46e5;
+  --mcv-primary-hover: #4338ca;
+  --mcv-primary-light: #e0e7ff;
+  --mcv-accent: #06b6d4;
+  --mcv-bg-glass: rgba(255, 255, 255, 0.88);
+  --mcv-bg-glass-dark: rgba(17, 24, 39, 0.92);
+  --mcv-text-main: #1e293b;
+  --mcv-text-muted: #64748b;
+  --mcv-border: rgba(226, 232, 240, 0.8);
+  --mcv-shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.15), 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  --mcv-radius-pill: 9999px;
+  --mcv-radius-card: 16px;
+  --mcv-radius-sm: 6px;
+  --mcv-transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   1. Checkbox Styling
+   -------------------------------------------------------------------------- */
+.mcv-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.mcv-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #94a3b8;
+  border-radius: 5px;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition: var(--mcv-transition);
+  position: relative;
+  outline: none;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.mcv-checkbox:hover {
+  border-color: var(--mcv-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.mcv-checkbox:checked {
+  background-color: var(--mcv-primary);
+  border-color: var(--mcv-primary);
+}
+
+.mcv-checkbox:checked::before {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+/* Indeterminate (Tri-state [-]) */
+.mcv-checkbox:indeterminate {
+  background-color: var(--mcv-primary);
+  border-color: var(--mcv-primary);
+}
+
+.mcv-checkbox:indeterminate::before {
+  content: "";
+  width: 9px;
+  height: 2px;
+  background-color: #ffffff;
+  border-radius: 1px;
+}
+
+.mcv-folder-checkbox {
+  margin-right: 8px;
+  z-index: 10;
+}
+
+.mcv-file-checkbox {
+  margin-right: 6px;
+}
+
+/* Highlight row when checked */
+tr.mcv-row-selected {
+  background-color: rgba(79, 70, 229, 0.05) !important;
+  transition: background-color 0.15s ease;
+}
+
+/* --------------------------------------------------------------------------
+   2. Floating Action Bar
+   -------------------------------------------------------------------------- */
+.mcv-floating-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--mcv-bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--mcv-border);
+  box-shadow: var(--mcv-shadow-lg);
+  border-radius: var(--mcv-radius-pill);
+  padding: 8px 14px 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 99999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.mcv-floating-bar.mcv-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mcv-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mcv-text-main);
+  padding-right: 4px;
+}
+
+.mcv-badge {
+  background: linear-gradient(135deg, var(--mcv-primary), var(--mcv-accent));
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--mcv-radius-pill);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+.mcv-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcv-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--mcv-radius-pill);
+  border: none;
+  cursor: pointer;
+  transition: var(--mcv-transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  outline: none;
+  line-height: 1;
+}
+
+.mcv-btn-secondary {
+  background: transparent;
+  color: var(--mcv-text-muted);
+  border: 1px solid transparent;
+}
+
+.mcv-btn-secondary:hover {
+  background: rgba(241, 245, 249, 0.8);
+  color: var(--mcv-text-main);
+}
+
+.mcv-btn-outline {
+  background: #ffffff;
+  color: var(--mcv-primary);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+}
+
+.mcv-btn-outline:hover {
+  background: var(--mcv-primary-light);
+  border-color: var(--mcv-primary);
+}
+
+.mcv-btn-primary {
+  background: linear-gradient(135deg, var(--mcv-primary) 0%, #4338ca 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.mcv-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+}
+
+.mcv-btn-primary:active {
+  transform: translateY(0);
+}
+
+.mcv-btn-download {
+  position: relative;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   3. Download Progress Modal & Overlay
+   -------------------------------------------------------------------------- */
+.mcv-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.mcv-modal-overlay.mcv-modal-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mcv-progress-modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 460px;
+  border-radius: var(--mcv-radius-card);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mcv-modal-overlay.mcv-modal-visible .mcv-progress-modal {
+  transform: scale(1);
+}
+
+.mcv-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.mcv-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--mcv-text-main);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcv-modal-course {
+  font-size: 13px;
+  color: var(--mcv-text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcv-progress-container {
+  margin: 18px 0 12px;
+}
+
+.mcv-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mcv-text-main);
+  margin-bottom: 8px;
+}
+
+.mcv-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: var(--mcv-radius-pill);
+  overflow: hidden;
+  position: relative;
+}
+
+.mcv-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--mcv-primary), var(--mcv-accent));
+  border-radius: var(--mcv-radius-pill);
+  transition: width 0.2s ease-out;
+}
+
+.mcv-status-detail {
+  font-size: 12px;
+  color: var(--mcv-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 8px;
+  min-height: 16px;
+}
+
+.mcv-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 8px;
+}
+
+.mcv-btn-cancel {
+  background: #f1f5f9;
+  color: var(--mcv-text-muted);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: var(--mcv-transition);
+}
+
+.mcv-btn-cancel:hover {
+  background: #e2e8f0;
+  color: var(--mcv-text-main);
 }
