@@ -1,0 +1,17 @@
+{
+  "name": "mcv-file-download",
+  "version": "1.0.0",
+  "description": "Google Chrome extension to batch download course materials from MyCourseVille as an organized ZIP.",
+  "main": "content.js",
+  "scripts": {
+    "test": "node tests/manifest.test.js && node tests/styles.test.js && node tests/selection.test.js && node tests/downloader.test.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "mycourseville",
+    "downloader",
+    "batch-download"
+  ],
+  "author": "",
+  "license": "MIT"
+}
